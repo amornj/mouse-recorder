@@ -41,21 +41,36 @@ Built with C# / WPF / .NET Framework 4.8 — runs on Windows 10 and 11 with no a
 ## Requirements
 
 - **To run**: Windows 10 or 11 (.NET Framework 4.8 is pre-installed)
-- **To build**: Visual Studio 2019 or 2022 with ".NET desktop development" workload
+- **To build**: Visual Studio 2019/2022 Build Tools + [.NET Framework 4.8 Developer Pack](https://dotnet.microsoft.com/download/dotnet-framework/net48)
 
 ## Build
 
-1. Clone the repository
-2. Open `MouseRecorder.sln` in Visual Studio
-3. NuGet restore will pull `Newtonsoft.Json` automatically
-4. Build with `F5` (Debug) or `Ctrl+Shift+B`
-
-Or from command line:
 ```
-msbuild MouseRecorder.sln /p:Configuration=Release
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\MSBuild.exe" MouseRecorder.sln -p:Configuration=Release -restore
 ```
 
 Output: `MouseRecorder\bin\Release\MouseRecorder.exe`
+
+## Deploy to Another Computer
+
+No installer needed. Just copy these files from `MouseRecorder\bin\Release\`:
+
+- `MouseRecorder.exe`
+- `Newtonsoft.Json.dll`
+
+Put them in the same folder on the target machine and run the exe.
+
+## Usage
+
+1. Click **New Macro** to create a macro
+2. Add steps: **+ Click**, **+ Keyboard**, or **+ Wait**
+3. For click steps, use **Pick** to select screen coordinates via crosshair overlay
+4. Assign a **Hotkey** to trigger the macro globally
+5. Set **Repeat** count (0 = loop forever)
+6. Press the hotkey from any app to run the macro
+7. Press **F12** to emergency stop
+
+The app minimizes to the system tray. Right-click the tray icon and choose **Exit** to close.
 
 ## Macro JSON Format
 

@@ -34,7 +34,6 @@ namespace MouseRecorder.Models
 
         public List<MacroStep> Steps { get; set; } = new List<MacroStep>();
 
-        [JsonIgnore]
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected void OnPropertyChanged([CallerMemberName] string name = null)

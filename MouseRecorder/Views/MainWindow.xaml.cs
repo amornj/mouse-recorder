@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using Microsoft.Win32;
 using MouseRecorder.Services;
 using MouseRecorder.ViewModels;
@@ -33,6 +34,14 @@ namespace MouseRecorder.Views
             _vm.SetHotkeyService(_hotkeyService);
 
             SetupTrayIcon();
+        }
+
+        private void ToolBar_Loaded(object sender, RoutedEventArgs e)
+        {
+            var toolBar = sender as ToolBar;
+            var overflowGrid = toolBar.Template.FindName("OverflowGrid", toolBar) as FrameworkElement;
+            if (overflowGrid != null)
+                overflowGrid.Visibility = Visibility.Collapsed;
         }
 
         // ── Tray Icon ───────────────────────────────────────────

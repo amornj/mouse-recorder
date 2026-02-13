@@ -71,7 +71,6 @@ namespace MouseRecorder.Models
             }
         }
 
-        [JsonIgnore]
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected void OnPropertyChanged([CallerMemberName] string name = null)

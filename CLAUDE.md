@@ -8,11 +8,16 @@ Mouse Recorder is a Windows desktop app (WPF, C#, .NET Framework 4.8) for automa
 
 ## Build & Run
 
-Open `MouseRecorder.sln` in Visual Studio 2019 or 2022. NuGet restore pulls Newtonsoft.Json automatically.
+Requires VS 2019/2022 Build Tools and .NET Framework 4.8 Developer Pack.
 
-- **Build**: `msbuild MouseRecorder.sln /p:Configuration=Release`
+```
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\MSBuild.exe" MouseRecorder.sln -p:Configuration=Release -restore
+```
+
 - **Output**: `MouseRecorder\bin\Release\MouseRecorder.exe`
-- **Installer**: MSI packaging (not yet configured — use WiX or VS Installer project)
+- **Deployment**: No installer needed. Zip `bin\Release\` folder (exe + Newtonsoft.Json.dll) and copy to target machine. .NET Framework 4.8 is pre-installed on Windows 10/11.
+
+**Important**: Close the running app before rebuilding — the exe is locked while running (system tray → right-click → Exit).
 
 ## Architecture
 
