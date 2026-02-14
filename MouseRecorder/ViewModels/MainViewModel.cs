@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using MouseRecorder.Models;
+using MouseRecorder.Native;
 using MouseRecorder.Services;
 
 namespace MouseRecorder.ViewModels
@@ -20,6 +21,7 @@ namespace MouseRecorder.ViewModels
         public ObservableCollection<Macro> Macros { get; } = new ObservableCollection<Macro>();
         public ObservableCollection<MacroStep> Steps { get; } = new ObservableCollection<MacroStep>();
         public List<string> AvailableHotkeys => HotkeyService.AvailableHotkeys;
+        public IList<string> CommonKeystrokes => KeyMapper.CommonKeystrokes;
 
         private Macro _selectedMacro;
         public Macro SelectedMacro
@@ -65,13 +67,19 @@ namespace MouseRecorder.ViewModels
                 OnPropertyChanged(nameof(IsClickStepSelected));
                 OnPropertyChanged(nameof(IsWaitStepSelected));
                 OnPropertyChanged(nameof(IsKeyStepSelected));
+                OnPropertyChanged(nameof(IsKeystrokeStepSelected));
+                OnPropertyChanged(nameof(IsTextStepSelected));
             }
         }
 
         public bool HasSelectedStep => _selectedStep != null;
-        public bool IsClickStepSelected => _selectedStep?.Type == StepType.LeftClick;
+        public bool IsClickStepSelected => _selectedStep?.Type == StepType.LeftClick
+            || _selectedStep?.Type == StepType.LeftDoubleClick
+            || _selectedStep?.Type == StepType.RightClick;
         public bool IsWaitStepSelected => _selectedStep?.Type == StepType.Wait;
         public bool IsKeyStepSelected => _selectedStep?.Type == StepType.KeyboardShortcut;
+        public bool IsKeystrokeStepSelected => _selectedStep?.Type == StepType.Keystroke;
+        public bool IsTextStepSelected => _selectedStep?.Type == StepType.TypeText;
 
         private int _selectedStepIndex = -1;
         public int SelectedStepIndex
@@ -108,7 +116,13 @@ namespace MouseRecorder.ViewModels
             _player.StatusChanged += text =>
                 Application.Current?.Dispatcher?.Invoke(() => StatusText = text);
             _player.PlaybackFinished += () =>
-                Application.Current?.Dispatcher?.Invoke(() => IsPlaying = false);
+                Application.Current?.Dispatcher?.Invoke(() =>
+                {
+                    ClearActiveStep();
+                    IsPlaying = false;
+                });
+            _player.StepExecuting += index =>
+                Application.Current?.Dispatcher?.Invoke(() => SetActiveStep(index));
 
             LoadMacros();
         }
@@ -186,10 +200,50 @@ namespace MouseRecorder.ViewModels
             AutoSave();
         }
 
+        public void AddDoubleClickStep(int x, int y)
+        {
+            if (_selectedMacro == null) return;
+            var step = new MacroStep { Type = StepType.LeftDoubleClick, X = x, Y = y };
+            Steps.Add(step);
+            SelectedStep = step;
+            SelectedStepIndex = Steps.Count - 1;
+            AutoSave();
+        }
+
+        public void AddRightClickStep(int x, int y)
+        {
+            if (_selectedMacro == null) return;
+            var step = new MacroStep { Type = StepType.RightClick, X = x, Y = y };
+            Steps.Add(step);
+            SelectedStep = step;
+            SelectedStepIndex = Steps.Count - 1;
+            AutoSave();
+        }
+
         public void AddKeyStep(List<string> keys)
         {
             if (_selectedMacro == null) return;
             var step = new MacroStep { Type = StepType.KeyboardShortcut, Keys = keys };
+            Steps.Add(step);
+            SelectedStep = step;
+            SelectedStepIndex = Steps.Count - 1;
+            AutoSave();
+        }
+
+        public void AddKeystrokeStep(string keyName)
+        {
+            if (_selectedMacro == null) return;
+            var step = new MacroStep { Type = StepType.Keystroke, Keys = new List<string> { keyName } };
+            Steps.Add(step);
+            SelectedStep = step;
+            SelectedStepIndex = Steps.Count - 1;
+            AutoSave();
+        }
+
+        public void AddTextStep()
+        {
+            if (_selectedMacro == null) return;
+            var step = new MacroStep { Type = StepType.TypeText, Text = "" };
             Steps.Add(step);
             SelectedStep = step;
             SelectedStepIndex = Steps.Count - 1;
@@ -208,7 +262,9 @@ namespace MouseRecorder.ViewModels
 
         public void UpdateClickStepPosition(int x, int y)
         {
-            if (_selectedStep == null || _selectedStep.Type != StepType.LeftClick) return;
+            if (_selectedStep == null || (_selectedStep.Type != StepType.LeftClick
+                && _selectedStep.Type != StepType.LeftDoubleClick
+                && _selectedStep.Type != StepType.RightClick)) return;
             _selectedStep.X = x;
             _selectedStep.Y = y;
             AutoSave();
@@ -218,6 +274,13 @@ namespace MouseRecorder.ViewModels
         {
             if (_selectedStep == null || _selectedStep.Type != StepType.KeyboardShortcut) return;
             _selectedStep.Keys = keys;
+            AutoSave();
+        }
+
+        public void UpdateKeystrokeStep(string keyName)
+        {
+            if (_selectedStep == null || _selectedStep.Type != StepType.Keystroke) return;
+            _selectedStep.Keys = new List<string> { keyName };
             AutoSave();
         }
 
@@ -328,6 +391,19 @@ namespace MouseRecorder.ViewModels
         public void StopMacro()
         {
             _player.Stop();
+        }
+
+        private void SetActiveStep(int index)
+        {
+            ClearActiveStep();
+            if (index >= 0 && index < Steps.Count)
+                Steps[index].IsActive = true;
+        }
+
+        private void ClearActiveStep()
+        {
+            foreach (var step in Steps)
+                step.IsActive = false;
         }
 
         // ── Hotkey management ───────────────────────────────────

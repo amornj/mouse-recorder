@@ -15,6 +15,7 @@ namespace MouseRecorder.Services
         public bool IsPlaying { get; private set; }
         public event Action<string> StatusChanged;
         public event Action PlaybackFinished;
+        public event Action<int> StepExecuting;
 
         public async Task PlayAsync(Macro macro)
         {
@@ -34,10 +35,11 @@ namespace MouseRecorder.Services
                     _cts.Token.ThrowIfCancellationRequested();
                     RaiseStatus($"Running '{macro.Name}' — iteration {run + 1}/{totalLabel}");
 
-                    foreach (var step in macro.Steps)
+                    for (int i = 0; i < macro.Steps.Count; i++)
                     {
                         _cts.Token.ThrowIfCancellationRequested();
-                        ExecuteStep(step);
+                        StepExecuting?.Invoke(i);
+                        ExecuteStep(macro.Steps[i]);
                     }
                 }
 
@@ -70,8 +72,20 @@ namespace MouseRecorder.Services
                 case StepType.LeftClick:
                     PerformClick(step.X, step.Y);
                     break;
+                case StepType.LeftDoubleClick:
+                    PerformDoubleClick(step.X, step.Y);
+                    break;
+                case StepType.RightClick:
+                    PerformRightClick(step.X, step.Y);
+                    break;
                 case StepType.KeyboardShortcut:
                     PerformKeyCombo(step.Keys);
+                    break;
+                case StepType.Keystroke:
+                    PerformKeyCombo(step.Keys);
+                    break;
+                case StepType.TypeText:
+                    PerformTypeText(step.Text);
                     break;
                 case StepType.Wait:
                     WaitWithCancel(step.DelayMs);
@@ -86,6 +100,30 @@ namespace MouseRecorder.Services
             Win32.mouse_event(Win32.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, IntPtr.Zero);
             Thread.Sleep(20);
             Win32.mouse_event(Win32.MOUSEEVENTF_LEFTUP, 0, 0, 0, IntPtr.Zero);
+            Thread.Sleep(30);
+        }
+
+        private void PerformDoubleClick(int x, int y)
+        {
+            Win32.SetCursorPos(x, y);
+            Thread.Sleep(30);
+            Win32.mouse_event(Win32.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, IntPtr.Zero);
+            Thread.Sleep(20);
+            Win32.mouse_event(Win32.MOUSEEVENTF_LEFTUP, 0, 0, 0, IntPtr.Zero);
+            Thread.Sleep(20);
+            Win32.mouse_event(Win32.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, IntPtr.Zero);
+            Thread.Sleep(20);
+            Win32.mouse_event(Win32.MOUSEEVENTF_LEFTUP, 0, 0, 0, IntPtr.Zero);
+            Thread.Sleep(30);
+        }
+
+        private void PerformRightClick(int x, int y)
+        {
+            Win32.SetCursorPos(x, y);
+            Thread.Sleep(30);
+            Win32.mouse_event(Win32.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, IntPtr.Zero);
+            Thread.Sleep(20);
+            Win32.mouse_event(Win32.MOUSEEVENTF_RIGHTUP, 0, 0, 0, IntPtr.Zero);
             Thread.Sleep(30);
         }
 
@@ -125,6 +163,35 @@ namespace MouseRecorder.Services
 
             Win32.SendInput((uint)inputs.Length, inputs, inputSize);
             Thread.Sleep(50);
+        }
+
+        private void PerformTypeText(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return;
+
+            int inputSize = Marshal.SizeOf(typeof(Win32.INPUT));
+
+            foreach (char c in text)
+            {
+                var inputs = new Win32.INPUT[2];
+
+                // Key down
+                inputs[0].type = Win32.INPUT_KEYBOARD;
+                inputs[0].u.ki.wVk = 0;
+                inputs[0].u.ki.wScan = c;
+                inputs[0].u.ki.dwFlags = Win32.KEYEVENTF_UNICODE;
+
+                // Key up
+                inputs[1].type = Win32.INPUT_KEYBOARD;
+                inputs[1].u.ki.wVk = 0;
+                inputs[1].u.ki.wScan = c;
+                inputs[1].u.ki.dwFlags = Win32.KEYEVENTF_UNICODE | Win32.KEYEVENTF_KEYUP;
+
+                Win32.SendInput(2, inputs, inputSize);
+                Thread.Sleep(15);
+            }
+
+            Thread.Sleep(30);
         }
 
         private void WaitWithCancel(int ms)

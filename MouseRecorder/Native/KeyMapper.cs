@@ -1,10 +1,25 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace MouseRecorder.Native
 {
     public static class KeyMapper
     {
+        public static readonly ReadOnlyCollection<string> CommonKeystrokes = new ReadOnlyCollection<string>(new[]
+        {
+            // Navigation
+            "Tab", "Enter", "Space", "Escape", "Backspace", "Delete", "Insert",
+            // Page
+            "Home", "End", "PageUp", "PageDown",
+            // Arrows
+            "Up", "Down", "Left", "Right",
+            // Function keys
+            "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
+            // Other
+            "PrintScreen", "CapsLock", "NumLock", "ScrollLock", "Pause"
+        });
+
         private static readonly Dictionary<string, ushort> Map = new Dictionary<string, ushort>(StringComparer.OrdinalIgnoreCase)
         {
             // Modifiers

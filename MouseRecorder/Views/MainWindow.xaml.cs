@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using Microsoft.Win32;
 using MouseRecorder.Services;
 using MouseRecorder.ViewModels;
@@ -156,13 +157,55 @@ namespace MouseRecorder.Views
             Activate();
         }
 
-        private void AddKeyStep_Click(object sender, RoutedEventArgs e)
+        private async void AddDoubleClickStep_Click(object sender, RoutedEventArgs e)
+        {
+            if (_vm.SelectedMacro == null) return;
+
+            Hide();
+            await Task.Delay(350);
+
+            var overlay = new OverlayWindow();
+            if (overlay.ShowDialog() == true)
+                _vm.AddDoubleClickStep(overlay.SelectedX, overlay.SelectedY);
+
+            Show();
+            Activate();
+        }
+
+        private async void AddRightClickStep_Click(object sender, RoutedEventArgs e)
+        {
+            if (_vm.SelectedMacro == null) return;
+
+            Hide();
+            await Task.Delay(350);
+
+            var overlay = new OverlayWindow();
+            if (overlay.ShowDialog() == true)
+                _vm.AddRightClickStep(overlay.SelectedX, overlay.SelectedY);
+
+            Show();
+            Activate();
+        }
+
+        private void AddShortcutStep_Click(object sender, RoutedEventArgs e)
         {
             if (_vm.SelectedMacro == null) return;
 
             var dlg = new KeyCaptureWindow { Owner = this };
             if (dlg.ShowDialog() == true && dlg.CapturedKeys.Count > 0)
                 _vm.AddKeyStep(dlg.CapturedKeys);
+        }
+
+        private void AddKeystrokeStep_Click(object sender, RoutedEventArgs e)
+        {
+            if (_vm.SelectedMacro == null) return;
+            _vm.AddKeystrokeStep("Enter");
+        }
+
+        private void AddTextStep_Click(object sender, RoutedEventArgs e)
+        {
+            if (_vm.SelectedMacro == null) return;
+            _vm.AddTextStep();
         }
 
         private void AddWaitStep_Click(object sender, RoutedEventArgs e) => _vm.AddWaitStep();
@@ -185,6 +228,13 @@ namespace MouseRecorder.Views
             Activate();
         }
 
+        private void KeystrokeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var combo = sender as ComboBox;
+            if (combo?.SelectedItem is string keyName && _vm.SelectedStep != null)
+                _vm.UpdateKeystrokeStep(keyName);
+        }
+
         private void RecaptureKeys_Click(object sender, RoutedEventArgs e)
         {
             if (_vm.SelectedStep == null) return;
@@ -192,6 +242,58 @@ namespace MouseRecorder.Views
             var dlg = new KeyCaptureWindow { Owner = this };
             if (dlg.ShowDialog() == true && dlg.CapturedKeys.Count > 0)
                 _vm.UpdateKeyStep(dlg.CapturedKeys);
+        }
+
+        // ── Inline note editing ──────────────────────────────────
+
+        private void StepNote_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount != 2) return;
+
+            var grid = sender as Grid;
+            if (grid == null) return;
+
+            foreach (var child in grid.Children)
+            {
+                if (child is TextBlock tb) tb.Visibility = Visibility.Collapsed;
+                if (child is TextBox tx)
+                {
+                    tx.Visibility = Visibility.Visible;
+                    tx.Focus();
+                    tx.SelectAll();
+                }
+            }
+
+            e.Handled = true;
+        }
+
+        private void StepNoteEdit_LostFocus(object sender, RoutedEventArgs e)
+        {
+            CommitNoteEdit(sender as TextBox);
+        }
+
+        private void StepNoteEdit_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter || e.Key == Key.Escape)
+            {
+                CommitNoteEdit(sender as TextBox);
+                e.Handled = true;
+            }
+        }
+
+        private void CommitNoteEdit(TextBox textBox)
+        {
+            if (textBox == null) return;
+
+            var grid = textBox.Parent as Grid;
+            if (grid == null) return;
+
+            foreach (var child in grid.Children)
+            {
+                if (child is TextBlock tb) tb.Visibility = Visibility.Visible;
+            }
+            textBox.Visibility = Visibility.Collapsed;
+            _vm.AutoSave();
         }
 
         // ── Auto-save on field changes ──────────────────────────

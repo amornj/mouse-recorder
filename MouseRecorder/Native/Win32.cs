@@ -25,6 +25,8 @@ namespace MouseRecorder.Native
 
         public const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
         public const uint MOUSEEVENTF_LEFTUP = 0x0004;
+        public const uint MOUSEEVENTF_RIGHTDOWN = 0x0008;
+        public const uint MOUSEEVENTF_RIGHTUP = 0x0010;
 
         public const int WM_HOTKEY = 0x0312;
 
@@ -36,6 +38,7 @@ namespace MouseRecorder.Native
         public const int INPUT_KEYBOARD = 1;
         public const uint KEYEVENTF_KEYUP = 0x0002;
         public const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
+        public const uint KEYEVENTF_UNICODE = 0x0004;
 
         [StructLayout(LayoutKind.Sequential)]
         public struct POINT

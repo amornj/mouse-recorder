@@ -82,125 +82,202 @@
                           Background="Transparent" />
 
             <!-- Right: Macro editor -->
-            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto"
-                          Margin="4" Padding="4">
-                <StackPanel IsEnabled="{Binding HasSelectedMacro}">
+            <Grid Grid.Column="2" Margin="4" IsEnabled="{Binding HasSelectedMacro}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                    <!-- Macro name -->
-                    <DockPanel Margin="0,0,0,6">
-                        <TextBlock Text="Name:" Width="60" VerticalAlignment="Center" />
-                        <TextBox Text="{Binding SelectedMacro.Name, UpdateSourceTrigger=PropertyChanged}"
-                                 LostFocus="MacroField_LostFocus" />
-                    </DockPanel>
+                <!-- Macro name -->
+                <DockPanel Grid.Row="0" Margin="4,4,4,6">
+                    <TextBlock Text="Name:" Width="60" VerticalAlignment="Center" />
+                    <TextBox Text="{Binding SelectedMacro.Name, UpdateSourceTrigger=PropertyChanged}"
+                             LostFocus="MacroField_LostFocus" />
+                </DockPanel>
 
-                    <!-- Hotkey -->
-                    <DockPanel Margin="0,0,0,6">
-                        <TextBlock Text="Hotkey:" Width="60" VerticalAlignment="Center" />
-                        <ComboBox ItemsSource="{Binding AvailableHotkeys}"
-                                  SelectedItem="{Binding SelectedMacroHotkey}"
-                                  Width="130" HorizontalAlignment="Left" />
-                    </DockPanel>
+                <!-- Hotkey -->
+                <DockPanel Grid.Row="1" Margin="4,0,4,6">
+                    <TextBlock Text="Hotkey:" Width="60" VerticalAlignment="Center" />
+                    <ComboBox ItemsSource="{Binding AvailableHotkeys}"
+                              SelectedItem="{Binding SelectedMacroHotkey}"
+                              Width="130" HorizontalAlignment="Left" />
+                </DockPanel>
 
-                    <!-- Repeat -->
-                    <DockPanel Margin="0,0,0,10">
-                        <TextBlock Text="Repeat:" Width="60" VerticalAlignment="Center" />
-                        <TextBox Text="{Binding SelectedMacro.RepeatCount, UpdateSourceTrigger=LostFocus}"
-                                 Width="60" HorizontalAlignment="Left"
-                                 LostFocus="MacroField_LostFocus" />
-                        <TextBlock Text="times  (0 = loop forever)" Margin="6,0,0,0"
-                                   VerticalAlignment="Center" Foreground="Gray" />
-                    </DockPanel>
+                <!-- Repeat -->
+                <DockPanel Grid.Row="2" Margin="4,0,4,10">
+                    <TextBlock Text="Repeat:" Width="60" VerticalAlignment="Center" />
+                    <TextBox Text="{Binding SelectedMacro.RepeatCount, UpdateSourceTrigger=LostFocus}"
+                             Width="60" HorizontalAlignment="Left"
+                             LostFocus="MacroField_LostFocus" />
+                    <TextBlock Text="times  (0 = loop forever)" Margin="6,0,0,0"
+                               VerticalAlignment="Center" Foreground="Gray" />
+                </DockPanel>
 
-                    <!-- Steps header + buttons -->
-                    <DockPanel Margin="0,0,0,4">
-                        <TextBlock Text="Steps" FontWeight="SemiBold" FontSize="13"
-                                   VerticalAlignment="Center" />
-                    </DockPanel>
+                <!-- Steps column headers -->
+                <Grid Grid.Row="3" Margin="4,0,4,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Steps" FontWeight="SemiBold"
+                               FontSize="13" Margin="4,0" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="Note" FontWeight="SemiBold"
+                               FontSize="13" Margin="8,0" VerticalAlignment="Center"
+                               Foreground="#555" />
+                </Grid>
 
-                    <!-- Steps list -->
-                    <ListBox x:Name="StepList"
-                             ItemsSource="{Binding Steps}"
-                             SelectedItem="{Binding SelectedStep}"
-                             SelectedIndex="{Binding SelectedStepIndex}"
-                             MinHeight="120" MaxHeight="260"
-                             HorizontalContentAlignment="Stretch"
-                             Margin="0,0,0,6">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding DisplayText}" Margin="4,2" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                <!-- Steps list (fills remaining space) -->
+                <ListBox Grid.Row="4" x:Name="StepList"
+                         ItemsSource="{Binding Steps}"
+                         SelectedItem="{Binding SelectedStep}"
+                         SelectedIndex="{Binding SelectedStepIndex}"
+                         MinHeight="80"
+                         HorizontalContentAlignment="Stretch"
+                         Margin="4,0,4,6">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                    <Setter Property="Background" Value="#FFF9C4" />
+                                    <Setter Property="BorderBrush" Value="#FBC02D" />
+                                    <Setter Property="BorderThickness" Value="1" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding DisplayText}"
+                                           Margin="4,2" VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis" />
+                                <Grid Grid.Column="1" Background="Transparent"
+                                      MouseLeftButtonDown="StepNote_MouseDown">
+                                    <Border BorderBrush="#DDD" BorderThickness="1,0,0,0">
+                                        <TextBlock Text="{Binding Annotation}" Foreground="#888"
+                                                   FontStyle="Italic" Margin="8,2,4,2"
+                                                   VerticalAlignment="Center" IsHitTestVisible="False"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </Border>
+                                    <TextBox Text="{Binding Annotation, UpdateSourceTrigger=PropertyChanged}"
+                                             Visibility="Collapsed" Margin="6,0,2,0"
+                                             FontStyle="Italic" Foreground="#555"
+                                             LostFocus="StepNoteEdit_LostFocus"
+                                             KeyDown="StepNoteEdit_KeyDown" />
+                                </Grid>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
 
-                    <!-- Add step buttons -->
-                    <WrapPanel Margin="0,0,0,6">
-                        <Button Content="+ Click" Click="AddClickStep_Click"
-                                Padding="8,3" Margin="0,0,4,0" />
-                        <Button Content="+ Keyboard" Click="AddKeyStep_Click"
-                                Padding="8,3" Margin="0,0,4,0" />
-                        <Button Content="+ Wait" Click="AddWaitStep_Click"
-                                Padding="8,3" Margin="0,0,4,0" />
-                        <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"
-                                   Margin="4,0" />
-                        <Button Content="&#x25B2; Up" Click="MoveStepUp_Click"
-                                Padding="8,3" Margin="0,0,4,0" />
-                        <Button Content="&#x25BC; Down" Click="MoveStepDown_Click"
-                                Padding="8,3" Margin="0,0,4,0" />
-                        <Button Content="&#x2716; Delete" Click="DeleteStep_Click"
-                                Padding="8,3" Margin="0,0,4,0" />
-                    </WrapPanel>
+                <!-- Add step buttons -->
+                <WrapPanel Grid.Row="5" Margin="4,0,4,6">
+                    <Button Content="+ Click" Click="AddClickStep_Click"
+                            Padding="8,3" Margin="0,0,4,0" />
+                    <Button Content="+ Dbl Click" Click="AddDoubleClickStep_Click"
+                            Padding="8,3" Margin="0,0,4,0" />
+                    <Button Content="+ Right Click" Click="AddRightClickStep_Click"
+                            Padding="8,3" Margin="0,0,4,0" />
+                    <Button Content="+ Shortcut" Click="AddShortcutStep_Click"
+                            Padding="8,3" Margin="0,0,4,0" />
+                    <Button Content="+ Keystroke" Click="AddKeystrokeStep_Click"
+                            Padding="8,3" Margin="0,0,4,0" />
+                    <Button Content="+ Type Text" Click="AddTextStep_Click"
+                            Padding="8,3" Margin="0,0,4,0" />
+                    <Button Content="+ Wait" Click="AddWaitStep_Click"
+                            Padding="8,3" Margin="0,0,4,0" />
+                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"
+                               Margin="4,0" />
+                    <Button Content="&#x25B2; Up" Click="MoveStepUp_Click"
+                            Padding="8,3" Margin="0,0,4,0" />
+                    <Button Content="&#x25BC; Down" Click="MoveStepDown_Click"
+                            Padding="8,3" Margin="0,0,4,0" />
+                    <Button Content="&#x2716; Delete" Click="DeleteStep_Click"
+                            Padding="8,3" Margin="0,0,4,0" />
+                </WrapPanel>
 
-                    <!-- Step detail editor -->
-                    <Border BorderBrush="#CCC" BorderThickness="1" CornerRadius="3"
-                            Padding="8" Margin="0,0,0,4"
-                            Visibility="{Binding HasSelectedStep, Converter={StaticResource BoolToVis}}">
-                        <StackPanel>
-                            <TextBlock Text="Edit Step" FontWeight="SemiBold" Margin="0,0,0,6" />
+                <!-- Step detail editor -->
+                <Border Grid.Row="6" BorderBrush="#CCC" BorderThickness="1" CornerRadius="3"
+                        Padding="8" Margin="4,0,4,4"
+                        Visibility="{Binding HasSelectedStep, Converter={StaticResource BoolToVis}}">
+                    <StackPanel>
+                        <TextBlock Text="Edit Step" FontWeight="SemiBold" Margin="0,0,0,6" />
 
-                            <!-- Click step editor -->
-                            <StackPanel Visibility="{Binding IsClickStepSelected, Converter={StaticResource BoolToVis}}">
-                                <DockPanel Margin="0,0,0,4">
-                                    <TextBlock Text="X:" Width="30" VerticalAlignment="Center" />
-                                    <TextBox Text="{Binding SelectedStep.X, UpdateSourceTrigger=PropertyChanged}"
-                                             Width="80" HorizontalAlignment="Left"
-                                             LostFocus="StepField_LostFocus" />
-                                    <TextBlock Text="Y:" Width="30" Margin="12,0,0,0"
-                                               VerticalAlignment="Center" />
-                                    <TextBox Text="{Binding SelectedStep.Y, UpdateSourceTrigger=PropertyChanged}"
-                                             Width="80" HorizontalAlignment="Left"
-                                             LostFocus="StepField_LostFocus" />
-                                    <Button Content="Pick" Click="PickPosition_Click"
-                                            Padding="10,2" Margin="12,0,0,0" />
-                                </DockPanel>
-                            </StackPanel>
-
-                            <!-- Wait step editor -->
-                            <StackPanel Visibility="{Binding IsWaitStepSelected, Converter={StaticResource BoolToVis}}">
-                                <DockPanel>
-                                    <TextBlock Text="Delay:" Width="50" VerticalAlignment="Center" />
-                                    <TextBox Text="{Binding SelectedStep.DelayMs, UpdateSourceTrigger=PropertyChanged}"
-                                             Width="80" HorizontalAlignment="Left"
-                                             LostFocus="StepField_LostFocus" />
-                                    <TextBlock Text="ms" Margin="6,0,0,0" VerticalAlignment="Center" />
-                                </DockPanel>
-                            </StackPanel>
-
-                            <!-- Key step editor -->
-                            <StackPanel Visibility="{Binding IsKeyStepSelected, Converter={StaticResource BoolToVis}}">
-                                <DockPanel>
-                                    <TextBlock Text="Keys:" Width="50" VerticalAlignment="Center" />
-                                    <TextBlock x:Name="KeyStepDisplay"
-                                               Text="{Binding SelectedStep.DisplayText}"
-                                               VerticalAlignment="Center" Margin="0,0,12,0" />
-                                    <Button Content="Recapture" Click="RecaptureKeys_Click"
-                                            Padding="10,2" />
-                                </DockPanel>
-                            </StackPanel>
+                        <!-- Click step editor -->
+                        <StackPanel Visibility="{Binding IsClickStepSelected, Converter={StaticResource BoolToVis}}">
+                            <DockPanel Margin="0,0,0,4">
+                                <TextBlock Text="X:" Width="30" VerticalAlignment="Center" />
+                                <TextBox Text="{Binding SelectedStep.X, UpdateSourceTrigger=PropertyChanged}"
+                                         Width="80" HorizontalAlignment="Left"
+                                         LostFocus="StepField_LostFocus" />
+                                <TextBlock Text="Y:" Width="30" Margin="12,0,0,0"
+                                           VerticalAlignment="Center" />
+                                <TextBox Text="{Binding SelectedStep.Y, UpdateSourceTrigger=PropertyChanged}"
+                                         Width="80" HorizontalAlignment="Left"
+                                         LostFocus="StepField_LostFocus" />
+                                <Button Content="Pick" Click="PickPosition_Click"
+                                        Padding="10,2" Margin="12,0,0,0" />
+                            </DockPanel>
                         </StackPanel>
-                    </Border>
 
-                </StackPanel>
-            </ScrollViewer>
+                        <!-- Wait step editor -->
+                        <StackPanel Visibility="{Binding IsWaitStepSelected, Converter={StaticResource BoolToVis}}">
+                            <DockPanel>
+                                <TextBlock Text="Delay:" Width="50" VerticalAlignment="Center" />
+                                <TextBox Text="{Binding SelectedStep.DelayMs, UpdateSourceTrigger=PropertyChanged}"
+                                         Width="80" HorizontalAlignment="Left"
+                                         LostFocus="StepField_LostFocus" />
+                                <TextBlock Text="ms" Margin="6,0,0,0" VerticalAlignment="Center" />
+                            </DockPanel>
+                        </StackPanel>
+
+                        <!-- Shortcut step editor -->
+                        <StackPanel Visibility="{Binding IsKeyStepSelected, Converter={StaticResource BoolToVis}}">
+                            <DockPanel>
+                                <TextBlock Text="Shortcut:" Width="60" VerticalAlignment="Center" />
+                                <TextBlock x:Name="KeyStepDisplay"
+                                           Text="{Binding SelectedStep.DisplayText}"
+                                           VerticalAlignment="Center" Margin="0,0,12,0" />
+                                <Button Content="Recapture" Click="RecaptureKeys_Click"
+                                        Padding="10,2" />
+                            </DockPanel>
+                        </StackPanel>
+
+                        <!-- Keystroke step editor -->
+                        <StackPanel Visibility="{Binding IsKeystrokeStepSelected, Converter={StaticResource BoolToVis}}">
+                            <DockPanel>
+                                <TextBlock Text="Key:" Width="50" VerticalAlignment="Center" />
+                                <ComboBox ItemsSource="{Binding CommonKeystrokes}"
+                                          SelectedItem="{Binding SelectedStep.Keys[0]}"
+                                          Width="150" HorizontalAlignment="Left"
+                                          SelectionChanged="KeystrokeCombo_SelectionChanged" />
+                            </DockPanel>
+                        </StackPanel>
+
+                        <!-- Type Text step editor -->
+                        <StackPanel Visibility="{Binding IsTextStepSelected, Converter={StaticResource BoolToVis}}">
+                            <DockPanel>
+                                <TextBlock Text="Text:" Width="50" VerticalAlignment="Center" />
+                                <TextBox Text="{Binding SelectedStep.Text, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="True" TextWrapping="Wrap"
+                                         MinHeight="50" MaxHeight="120"
+                                         VerticalScrollBarVisibility="Auto"
+                                         LostFocus="StepField_LostFocus" />
+                            </DockPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+            </Grid>
         </Grid>
     </DockPanel>
 </Window>

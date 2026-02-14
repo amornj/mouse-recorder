@@ -10,7 +10,11 @@ namespace MouseRecorder.Models
     public enum StepType
     {
         LeftClick,
+        LeftDoubleClick,
+        RightClick,
         KeyboardShortcut,
+        Keystroke,
+        TypeText,
         Wait
     }
 
@@ -21,6 +25,9 @@ namespace MouseRecorder.Models
         private int _y;
         private List<string> _keys = new List<string>();
         private int _delayMs = 500;
+        private string _text = "";
+        private string _annotation = "";
+        private bool _isActive;
 
         public StepType Type
         {
@@ -52,22 +59,52 @@ namespace MouseRecorder.Models
             set { _delayMs = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayText)); }
         }
 
+        public string Text
+        {
+            get => _text;
+            set { _text = value ?? ""; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayText)); }
+        }
+
+        public string Annotation
+        {
+            get => _annotation;
+            set { _annotation = value ?? ""; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayText)); }
+        }
+
+        [JsonIgnore]
+        public bool IsActive
+        {
+            get => _isActive;
+            set { _isActive = value; OnPropertyChanged(); }
+        }
+
         [JsonIgnore]
         public string DisplayText
         {
             get
             {
+                string label;
                 switch (Type)
                 {
                     case StepType.LeftClick:
-                        return $"Left Click at ({X}, {Y})";
+                        label = $"Left Click at ({X}, {Y})"; break;
+                    case StepType.LeftDoubleClick:
+                        label = $"Double Click at ({X}, {Y})"; break;
+                    case StepType.RightClick:
+                        label = $"Right Click at ({X}, {Y})"; break;
                     case StepType.KeyboardShortcut:
-                        return Keys.Count > 0 ? $"Key: {string.Join("+", Keys)}" : "Key: (none)";
+                        label = Keys.Count > 0 ? $"Key: {string.Join("+", Keys)}" : "Key: (none)"; break;
+                    case StepType.Keystroke:
+                        label = Keys.Count > 0 ? $"Keystroke: {Keys[0]}" : "Keystroke: (none)"; break;
+                    case StepType.TypeText:
+                        var preview = Text.Length > 30 ? Text.Substring(0, 30) + "..." : Text;
+                        label = $"Type: {preview}"; break;
                     case StepType.Wait:
-                        return $"Wait {DelayMs} ms";
+                        label = $"Wait {DelayMs} ms"; break;
                     default:
-                        return "Unknown";
+                        label = "Unknown"; break;
                 }
+                return label;
             }
         }
 
